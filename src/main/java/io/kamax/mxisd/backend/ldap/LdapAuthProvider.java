@@ -33,11 +33,12 @@ import io.kamax.mxisd.config.ldap.LdapConfig;
 import org.apache.commons.lang.StringUtils;
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.CursorLdapReferralException;
-import org.apache.directory.api.ldap.model.cursor.EntryCursor;
+import org.apache.directory.api.ldap.model.cursor.SearchCursor;
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
-import org.apache.directory.api.ldap.model.message.SearchScope;
+import org.apache.directory.api.ldap.model.message.*;
+import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,9 +107,21 @@ public class LdapAuthProvider extends LdapGenericBackend implements Authenticato
             String[] attArray = new String[attributes.size()];
             attributes.toArray(attArray);
 
-            try (EntryCursor cursor = conn.search(getBaseDn(), userFilter, SearchScope.SUBTREE, attArray)) {
+            SearchRequest req = new SearchRequestImpl();
+            req.setBase(new Dn(getBaseDn()));
+            req.setScope(SearchScope.SUBTREE);
+            req.addAttributes(attArray);
+            req.setFilter(userFilter);
+            req.followReferrals();
+            try (SearchCursor cursor = conn.search(req)) {
                 while (cursor.next()) {
-                    Entry entry = cursor.get();
+                    Response response = cursor.get();
+                    if (!(response instanceof SearchResultEntry)) {
+                        log.info("Skipping non-entry result: {}", response.getType());
+                        continue;
+                    }
+
+                    Entry entry = ((SearchResultEntry) response).getEntry();
                     String dn = entry.getDn().getName();
                     log.info("Checking possible match, DN: {}", dn);
 
