@@ -113,6 +113,7 @@ public class LdapAuthProvider extends LdapGenericBackend implements Authenticato
             req.addAttributes(attArray);
             req.setFilter(userFilter);
             req.followReferrals();
+            req.setDerefAliases(AliasDerefMode.DEREF_ALWAYS);
             try (SearchCursor cursor = conn.search(req)) {
                 while (cursor.next()) {
                     Response response = cursor.get();
