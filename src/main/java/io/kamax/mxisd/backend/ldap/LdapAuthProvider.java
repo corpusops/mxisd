@@ -117,10 +117,15 @@ public class LdapAuthProvider extends LdapGenericBackend implements Authenticato
             try (SearchCursor cursor = conn.search(req)) {
                 while (cursor.next()) {
                     Response response = cursor.get();
+                    if (response instanceof SearchResultReference) {
+                        ((SearchResultReference) response).getReferral().getLdapUrls().forEach(s -> log.info("Referral URI: {}", s));
+                    }
+
                     if (!(response instanceof SearchResultEntry)) {
                         log.info("Skipping non-entry result: {}", response.getType());
                         continue;
                     }
+
 
                     Entry entry = ((SearchResultEntry) response).getEntry();
                     String dn = entry.getDn().getName();
