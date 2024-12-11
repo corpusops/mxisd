@@ -1,3 +1,6 @@
+**NO LONGER MAINTAINED / ABANDONED**
+
+
 mxisd - Federated Matrix Identity Server Daemon
 -----
 ![Travis-CI build status](https://travis-ci.org/kamax-io/mxisd.svg?branch=master)  
